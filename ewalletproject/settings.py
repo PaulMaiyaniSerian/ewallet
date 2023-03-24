@@ -169,7 +169,7 @@ VALIDATIONURL = f"https://{ALLOWED_HOSTS[-1]}/api/v1/payments/c2b_validation"
 STKPUSH_CALLBACKURL = f"https://{ALLOWED_HOSTS[-1]}/api/v1/payments/stk_push_webhook"
 
 
-print(CONFIRMATIONURL, VALIDATIONURL)
+# print(CONFIRMATIONURL, VALIDATIONURL)
 
 SHORTCODE=env("SHORTCODE")
 TESTMSISDN=env("TESTMSISDN")
