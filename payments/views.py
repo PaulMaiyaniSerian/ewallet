@@ -3,13 +3,16 @@ from django.shortcuts import render
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-
+from rest_framework.permissions import IsAuthenticated
 # mpesa utils
 from . import mpesa_utils
 
 # models import
 from .models import MpesaTransaction
 from accounts.models import UserWallet
+
+# serializers
+from .serializers import MpesaTransactionSerializer
 
 
 # Create your views here.
@@ -81,7 +84,6 @@ class C2BConfirmationView(APIView):
 
 class RegisterMpesaCallBackUrlsView(APIView):
 
-
     def post(self, request):
         result = mpesa_utils.register_callbackurls()
         
@@ -132,3 +134,16 @@ class StkPushWebHookView(APIView):
         print(request.data, "stkpush webhook")
 
         return Response(status=status.HTTP_200_OK)
+
+
+class TransactionListView(APIView):
+    permission_classes=[IsAuthenticated]
+
+    def get(self, request):
+        # get all transacations that match the Userwallet from billrefnumber
+        user_wallet = UserWallet.objects.get(user=request.user)
+        transactions = MpesaTransaction.objects.filter(billRefNumber=user_wallet.account_number)
+
+        serializer = MpesaTransactionSerializer(transactions, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)

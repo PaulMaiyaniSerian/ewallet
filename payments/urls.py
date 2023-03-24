@@ -6,7 +6,8 @@ from .views import (
     RegisterMpesaCallBackUrlsView, 
     SimulateC2BTransactionView, 
     StkPushApiView,
-    StkPushWebHookView
+    StkPushWebHookView,
+    TransactionListView
 )
 
 urlpatterns = [
@@ -15,7 +16,9 @@ urlpatterns = [
     path('register_mpesa_callbackurls', RegisterMpesaCallBackUrlsView.as_view(), name="c2b_validation"),
     path('simulate_c2b_transaction', SimulateC2BTransactionView.as_view(), name="c2b_transaction_simulate"),
     path('stk_push', StkPushApiView.as_view(), name="stk_push_process"),
-    path('stk_push_webhook', StkPushWebHookView.as_view(), name="stk_push_process"),
+    path('stk_push_webhook', StkPushWebHookView.as_view(), name="stk_push_webhook"),
+    path('transactions/list', TransactionListView.as_view(), name="transaction_list_view"),
+
 
 
 ]
