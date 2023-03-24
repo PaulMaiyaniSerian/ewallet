@@ -1,12 +1,17 @@
 # from django.shortcuts import render
 
+# rest framework imports
 from rest_framework.views import APIView
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
 
-
+# serializer imports
 from .serializers import RegisterSerializer
+
+# model imports
+from .models import UserWallet, User
+
 
 # Create your views here.
 class UserRegisterView(generics.GenericAPIView):
