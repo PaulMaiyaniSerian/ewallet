@@ -1,6 +1,8 @@
 from rest_framework import serializers
-from .models import User, UserWallet
 from rest_framework.validators import UniqueValidator
+
+from .models import User, UserWallet
+
 from django.contrib.auth.password_validation import validate_password
 
 
@@ -60,3 +62,10 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
 
         return user
+    
+
+class UserWalletSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = UserWallet
+        fields = "__all__"
