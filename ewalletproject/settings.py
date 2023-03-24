@@ -40,7 +40,9 @@ INSTALLED_APPS = [
      # external libraries
     'rest_framework',
     "corsheaders",
-    
+    # register accounts app
+    'accounts.apps.AccountsConfig',
+
 ]
 
 
