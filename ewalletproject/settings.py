@@ -12,6 +12,11 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 from pathlib import Path
 
+import environ
+
+env = environ.Env()
+environ.Env.read_env()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -20,12 +25,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-1)g1_(%c!&_ws-@bwzz(afbqx-3h^y=c!y)^f_f_#fn!%uyk4b'
+SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# https host should be at the end of list
+ALLOWED_HOSTS = ["127.0.0.1","a352-154-155-239-63.eu.ngrok.io"]
 
 
 # Application definition
@@ -42,6 +48,8 @@ INSTALLED_APPS = [
     "corsheaders",
     # register accounts app
     'accounts.apps.AccountsConfig',
+    # register payments app
+    'payments.apps.PaymentsConfig',
 
 ]
 
@@ -70,13 +78,15 @@ MIDDLEWARE = [
 
 # cors origins settings
 CORS_ALLOW_ALL_ORIGINS = True
-# CORS_ALLOWED_ORIGINS = [
-#     "http://read.only.com",
-#     "http://change.allowed.com",
-# ]
+# # CORS_ALLOWED_ORIGINS = [
+# #     "http://read.only.com",
+# #     "http://change.allowed.com",
+#     "https://sandbox.safaricom.co.ke",
+      
+# # ]
 
 # CSRF_TRUSTED_ORIGINS = [
-#     "http://change.allowed.com",
+#     "https://sandbox.safaricom.co.ke",
 # ]
 
 ROOT_URLCONF = 'ewalletproject.urls'
@@ -151,3 +161,17 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# mpesa configs
+CONFIRMATIONURL = f"https://{ALLOWED_HOSTS[-1]}/api/v1/payments/c2b_confirmation"
+VALIDATIONURL = f"https://{ALLOWED_HOSTS[-1]}/api/v1/payments/c2b_validation"
+STKPUSH_CALLBACKURL = f"https://{ALLOWED_HOSTS[-1]}/api/v1/payments/stk_push_webhook"
+
+
+print(CONFIRMATIONURL, VALIDATIONURL)
+
+SHORTCODE=env("SHORTCODE")
+TESTMSISDN=env("TESTMSISDN")
+CONSUMER_KEY=env("CONSUMER_KEY")
+CONSUMER_SECRET=env("CONSUMER_SECRET")
