@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     "corsheaders",
     # register accounts app
     'accounts.apps.AccountsConfig',
+    # register payments app
+    'payments.apps.PaymentsConfig',
 
 ]
 
