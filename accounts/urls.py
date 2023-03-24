@@ -14,5 +14,7 @@ urlpatterns = [
     path('token/refresh', TokenRefreshView.as_view(), name='token_refresh'), 
     # register_view
     path("register_user", views.UserRegisterView.as_view(), name="register_normal_user"),
+    # get wallet balance
+    path("wallet/balance", views.UserWalletBalanceView.as_view(), name="wallet_balance"),
 
 ]
