@@ -8,14 +8,23 @@ from rest_framework.permissions import IsAuthenticated
 from . import mpesa_utils
 
 # models import
-from .models import MpesaTransaction
+from .models import C2BMpesaTransaction, LNMTransactions
 from accounts.models import UserWallet
 
 # serializers
-from .serializers import MpesaTransactionSerializer
+from .serializers import C2BMpesaTransactionSerializer
 
 
 # Create your views here.
+# endpoint for registering c2b callbacks
+class RegisterMpesaCallBackUrlsView(APIView):
+
+    def post(self, request):
+        result = mpesa_utils.register_callbackurls()
+        
+        return Response(data=result, status=status.HTTP_200_OK)
+    
+
 class C2BValidationView(APIView):
 
     def post(self, request):
@@ -48,7 +57,7 @@ class C2BConfirmationView(APIView):
         print(data, "confirmation")
         
         # create the transaction
-        mpesa_transaction = MpesaTransaction.objects.create(
+        mpesa_transaction = C2BMpesaTransaction.objects.create(
             transactionType = request.data.get("TransactionType"),
             transID = request.data.get("TransID"),
             transTime = request.data.get("TransTime"),
@@ -65,29 +74,34 @@ class C2BConfirmationView(APIView):
         )
         # update the user account balance from the billrefnumber
     
-        try:
-            user_wallet = UserWallet.objects.get(account_number=mpesa_transaction.billRefNumber)
-        except UserWallet.DoesNotExist:
-            message = {
-                "error": "account with given number does not exist"
-            }
-            return Response(data=message, status=status.HTTP_400_BAD_REQUEST)
+        # try:
+        #     user_wallet = UserWallet.objects.get(account_number=mpesa_transaction.billRefNumber)
+        # except UserWallet.DoesNotExist:
+        #     message = {
+        #         "error": "account with given number does not exist"
+        #     }
+        #     return Response(data=message, status=status.HTTP_400_BAD_REQUEST)
 
 
         # add to balance
-        user_wallet.balance += int(mpesa_transaction.transAmount)
-        user_wallet.save()
+        # user_wallet.balance += int(mpesa_transaction.transAmount)
+        # user_wallet.save()
 
 
         return Response(status=status.HTTP_200_OK)
-    
 
-class RegisterMpesaCallBackUrlsView(APIView):
 
-    def post(self, request):
-        result = mpesa_utils.register_callbackurls()
-        
-        return Response(data=result, status=status.HTTP_200_OK)
+class C2BTransactionListView(APIView):
+    permission_classes=[IsAuthenticated]
+
+    def get(self, request):
+        # get all transacations that match the Userwallet from billrefnumber
+        user_wallet = UserWallet.objects.get(user=request.user)
+        transactions = C2BMpesaTransaction.objects.filter(billRefNumber=user_wallet.account_number)
+
+        serializer = C2BMpesaTransactionSerializer(transactions, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class SimulateC2BTransactionView(APIView):
@@ -109,16 +123,147 @@ class SimulateC2BTransactionView(APIView):
             }
             return Response(data=message, status=status.HTTP_400_BAD_REQUEST)
 
-class StkPushApiView(APIView):
+
+
+class StkPushWebHookApiView(APIView):
+    # sample data
+    '''
+    {
+        'Body': {
+            'stkCallback': {
+                'MerchantRequestID': '3786-9664944-1',
+                'CheckoutRequestID': 'ws_CO_24032023165155703113953355', 
+                'ResultCode': 0, 
+                'ResultDesc': 'The service request is processed successfully.', 
+                'CallbackMetadata': {
+                    'Item': [
+                        {'Name': 'Amount', 'Value': 1.0}, 
+                        {'Name': 'MpesaReceiptNumber', 'Value': 'RCO4JCX8AW'}, 
+                        {'Name': 'Balance'}, 
+                        {'Name': 'TransactionDate', 'Value': 20230324165208}, 
+                        {'Name': 'PhoneNumber', 'Value': 254113953355}]
+                }
+            }
+        }
+    }
+
+    '''
+    '''
+    {
+        'Body': {
+            'stkCallback': {
+                'MerchantRequestID': '39304-10030073-1', 
+                'CheckoutRequestID': 'ws_CO_25032023065828577113953355', 
+                'ResultCode': 1032, 
+                'ResultDesc': 'Request cancelled by user'
+                }
+            }
+        }
+    '''
+
+    def post(self, request):
+        print(request.data, "stkpush webhook")
+        data = request.data
+
+        merchantRequestID = data["Body"]["stkCallback"]["MerchantRequestID"]
+        checkoutRequestID = data["Body"]["stkCallback"]["CheckoutRequestID"]
+        resultCode = data["Body"]["stkCallback"]["ResultCode"]
+        resultDesc = data["Body"]["stkCallback"]["ResultDesc"]
+
+
+        # use result code to check if cancelled or success
+        # cancelled payment
+
+        if resultCode == 1032:
+            try:
+                # get the transaction with merchid and checkoutid
+                lnm_transaction = LNMTransactions.objects.get(
+                    merchantRequestID=merchantRequestID,
+                    checkoutRequestID=checkoutRequestID,
+                )
+                # update the trans
+                lnm_transaction.resultCode = resultCode
+                lnm_transaction.resultDesc = resultDesc
+                lnm_transaction.save()
+
+            except LNMTransactions.DoesNotExist:
+                print("error data does not exist")
+
+            
+        elif resultCode == 0:
+            # success payment
+            merchantRequestID = data["Body"]["stkCallback"]["MerchantRequestID"]
+            checkoutRequestID = data["Body"]["stkCallback"]["CheckoutRequestID"]
+            resultCode = data["Body"]["stkCallback"]["ResultCode"]
+            resultDesc = data["Body"]["stkCallback"]["ResultDesc"]
+
+            amount = ""
+            mpesaReceiptNumber = ""
+            balance = ""
+            transactionDate = ""
+            phoneNumber = ""
+
+            callbackMetadataItems = data["Body"]["stkCallback"]["CallbackMetadata"]["Item"]
+            for item in callbackMetadataItems:
+                if item["Name"] == "Amount":
+                    amount = item["Value"]
+                elif item["Name"] == "MpesaReceiptNumber":
+                    mpesaReceiptNumber = item["Value"]
+                elif item["Name"] == "Balance":
+                    balance = ""
+                elif item["Name"] == "TransactionDate":
+                    transactionDate = item["Value"]
+                elif item["Name"] == "PhoneNumber":
+                    phoneNumber = item["Value"]
+          
+            # update transaction
+            try:
+                # get the transaction with merchid and checkoutid
+                lnm_transaction = LNMTransactions.objects.get(
+                    merchantRequestID=merchantRequestID,
+                    checkoutRequestID=checkoutRequestID,
+                )
+                # update the trans
+                lnm_transaction.resultCode = resultCode
+                lnm_transaction.resultDesc = resultDesc
+                lnm_transaction.amount = amount
+                lnm_transaction.mpesaReceiptNumber = mpesaReceiptNumber
+                lnm_transaction.balance = balance
+                lnm_transaction.transactionDate = transactionDate
+                lnm_transaction.phoneNumber = phoneNumber
+
+                lnm_transaction.save()
+
+                # get acccount from target_account in lnmTransaction
+                user_wallet = UserWallet.objects.get(account_number=lnm_transaction.target_account)
+                user_wallet.balance += int(lnm_transaction.amount)
+                user_wallet.save()
+
+            except LNMTransactions.DoesNotExist:
+                print("error data does not exist")
+
+        else:
+            print("another result code received")
+
+
+        return Response(status=status.HTTP_200_OK)
+
+
+
+        
+class StkPushProcessApiView(APIView):
 
     def post(self, request):
         # print(request.data)
         account_number = request.data.get("account_number")
         amount = request.data.get("amount")
+        number_to_pay_with = request.data.get("number_to_pay_with")
 
         if account_number and amount:
 
-            result = mpesa_utils.stk_push(account_number, amount)
+            result = mpesa_utils.stk_push(phone=number_to_pay_with, amount=amount, accountReference=account_number)
+
+            # if it is successful store 
 
             return Response(data=result, status=status.HTTP_200_OK)
 
@@ -127,23 +272,3 @@ class StkPushApiView(APIView):
                 "error": "please provide the account number"
             }
             return Response(data=message, status=status.HTTP_400_BAD_REQUEST)
-
-class StkPushWebHookView(APIView):
-
-    def post(self, request):
-        print(request.data, "stkpush webhook")
-
-        return Response(status=status.HTTP_200_OK)
-
-
-class TransactionListView(APIView):
-    permission_classes=[IsAuthenticated]
-
-    def get(self, request):
-        # get all transacations that match the Userwallet from billrefnumber
-        user_wallet = UserWallet.objects.get(user=request.user)
-        transactions = MpesaTransaction.objects.filter(billRefNumber=user_wallet.account_number)
-
-        serializer = MpesaTransactionSerializer(transactions, many=True)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)

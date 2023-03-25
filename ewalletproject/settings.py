@@ -31,7 +31,7 @@ SECRET_KEY = env("SECRET_KEY")
 DEBUG = True
 
 # https host should be at the end of list
-ALLOWED_HOSTS = ["127.0.0.1","a352-154-155-239-63.eu.ngrok.io"]
+ALLOWED_HOSTS = ["127.0.0.1",env("HOST_DOMAIN")]
 
 
 # Application definition
@@ -164,14 +164,20 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # mpesa configs
-CONFIRMATIONURL = f"https://{ALLOWED_HOSTS[-1]}/api/v1/payments/c2b_confirmation"
-VALIDATIONURL = f"https://{ALLOWED_HOSTS[-1]}/api/v1/payments/c2b_validation"
+CONFIRMATIONURL = f"https://{ALLOWED_HOSTS[-1]}/api/v1/payments/c2b_confirmation_hook"
+VALIDATIONURL = f"https://{ALLOWED_HOSTS[-1]}/api/v1/payments/c2b_validation_hook"
 STKPUSH_CALLBACKURL = f"https://{ALLOWED_HOSTS[-1]}/api/v1/payments/stk_push_webhook"
 
 
-# print(CONFIRMATIONURL, VALIDATIONURL)
 
 SHORTCODE=env("SHORTCODE")
+# for simulating c2b transactions
 TESTMSISDN=env("TESTMSISDN")
 CONSUMER_KEY=env("CONSUMER_KEY")
 CONSUMER_SECRET=env("CONSUMER_SECRET")
+PASSKEY=env("PASSKEY")
+
+MPESA_AUTH_URL=env("MPESA_AUTH_URL")
+MPESA_REGISTER_CALLBACK_URL=env("MPESA_REGISTER_CALLBACK_URL")
+PROCESS_STKPUSH_URL=env("PROCESS_STKPUSH_URL")
+C2B_SIMULATE_URL=env("C2B_SIMULATE_URL")

@@ -1,8 +1,9 @@
 from rest_framework import serializers
 
-from .models import MpesaTransaction
+from .models import C2BMpesaTransaction
 
-class MpesaTransactionSerializer(serializers.ModelSerializer):
+class C2BMpesaTransactionSerializer(serializers.ModelSerializer):
+
     class Meta:
-        model = MpesaTransaction
+        model = C2BMpesaTransaction
         fields = "__all__"
