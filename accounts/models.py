@@ -18,7 +18,7 @@ class UserWallet(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     account_number = models.CharField(max_length=15, unique=True, null=True, blank=True)
     # start balance with default of 0
-    balance = models.IntegerField(default=0)
+    balance = models.FloatField(default=0)
 
     def __str__(self):
         return f"{self.user.username} account"

@@ -83,7 +83,7 @@ def stk_push(phone, amount, accountReference):
     to the transactions which will later be modified in callback hook
     '''
 
-    print(response)
+    # print(response)
     if response.get("ResponseCode") == "0":
         print("successfuly sent")
         LNMTransactions.objects.create(
@@ -107,12 +107,13 @@ def simulate_c2b_transaction(account_number, amount):
     }
 
     data = {
-        "ShortCode": settings.SHORTCODE,
+        "ShortCode": int(settings.SHORTCODE),
         "CommandID": "CustomerPayBillOnline",
-        "Amount": amount,
-        "Msisdn": settings.TESTMSISDN,
+        "Amount": int(amount),
+        "Msisdn": int(settings.TESTMSISDN),
         "BillRefNumber": account_number
     }
+    print(data)
 
     response = requests.post(url, json=data, headers=headers)
     return response.json()

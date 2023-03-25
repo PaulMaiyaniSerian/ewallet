@@ -74,18 +74,18 @@ class C2BConfirmationView(APIView):
         )
         # update the user account balance from the billrefnumber
     
-        # try:
-        #     user_wallet = UserWallet.objects.get(account_number=mpesa_transaction.billRefNumber)
-        # except UserWallet.DoesNotExist:
-        #     message = {
-        #         "error": "account with given number does not exist"
-        #     }
-        #     return Response(data=message, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user_wallet = UserWallet.objects.get(account_number=mpesa_transaction.billRefNumber)
+        except UserWallet.DoesNotExist:
+            message = {
+                "error": "account with given number does not exist"
+            }
+            return Response(data=message, status=status.HTTP_400_BAD_REQUEST)
 
 
         # add to balance
-        # user_wallet.balance += int(mpesa_transaction.transAmount)
-        # user_wallet.save()
+        user_wallet.balance += float(mpesa_transaction.transAmount)
+        user_wallet.save()
 
 
         return Response(status=status.HTTP_200_OK)
@@ -236,7 +236,7 @@ class StkPushWebHookApiView(APIView):
 
                 # get acccount from target_account in lnmTransaction
                 user_wallet = UserWallet.objects.get(account_number=lnm_transaction.target_account)
-                user_wallet.balance += int(lnm_transaction.amount)
+                user_wallet.balance += float(lnm_transaction.amount)
                 user_wallet.save()
 
             except LNMTransactions.DoesNotExist:
