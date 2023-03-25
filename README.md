@@ -1,7 +1,8 @@
 # ewallet
 Prototype with mpesa express stkpush working.. production ready version coming soon
 
-<!-- add .env file in settings.py -->
+add .env file in settings.py and paste in the below code
+
 SECRET_KEY=supersecret
 HOST_DOMAIN=yourtunnelip or domain(https)
 
