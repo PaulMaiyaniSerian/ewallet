@@ -1,5 +1,5 @@
 # ewallet
-Prototype with mpesa express stkpush working.. production ready version coming soon
+Prototype with mpesa express stkpush and c2b working.. production ready version coming soon
 
 add .env file in settings.py and paste in the below code
 
